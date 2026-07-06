@@ -1,0 +1,5 @@
+[
+  {"id": 1, "group": "電機", "item": "1、2號主機電源供應器損壞", "status": "pending", "note": "已拆廠待料中"},
+  {"id": 2, "group": "電機", "item": "駕駛台主機監控電腦故障", "status": "error", "note": "已委商"},
+  {"id": 5, "group": "電機", "item": "兩部電機無法自動起動", "status": "success", "note": "1150702測試正常"}
+]
