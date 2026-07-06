@@ -8,6 +8,7 @@
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 8px; border: 1px solid #ccc; text-align: center; font-size: 14px; }
         input { padding: 5px; width: 30%; }
+        button { cursor: pointer; padding: 4px; margin: 2px; }
     </style>
 </head>
 <body>
@@ -48,7 +49,7 @@
             document.getElementById('newItem').value = "";
         };
 
-        // 編輯模式：切換為輸入框
+        // 編輯模式
         window.editItem = (id) => {
             const row = document.getElementById(`row-${id}`);
             const itemText = row.querySelector('.item-text').innerText;
@@ -72,21 +73,26 @@
             if (confirm("確定要刪除嗎？")) remove(ref(db, 'projects/' + id));
         };
 
-        // 即時渲染
+        // 即時渲染表格
         onValue(ref(db, 'projects'), (snapshot) => {
             const data = snapshot.val();
             const table = document.getElementById('projectTable');
             table.innerHTML = `<tr><th>組別</th><th>項目</th><th>狀態</th><th>操作</th></tr>`;
+            
             if (data) {
                 Object.keys(data).forEach(id => {
                     const p = data[id];
+                    // 修正狀態圖示邏輯
+                    const statusIcon = (p.status === 'success') ? '✅' : '❌';
+                    
                     table.innerHTML += `<tr id="row-${id}">
                         <td>${p.group}</td>
                         <td class="item-cell"><span class="item-text">${p.item}</span></td>
-                        <td>${p.status === 'success' ? '✅' : '❌'}</td>
+                        <td>${statusIcon}</td>
                         <td class="action-cell">
                             <button onclick="editItem('${id}')">✏️編輯</button>
                             <button onclick="updateStatus('${id}', 'success')">完成</button>
+                            <button onclick="updateStatus('${id}', 'error')">待料</button>
                             <button onclick="deleteProject('${id}')" style="color:red;">🗑️</button>
                         </td>
                     </tr>`;
