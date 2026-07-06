@@ -1,0 +1,34 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>年度定保工程管理系統</title>
+    <link rel="stylesheet" href="style.css">
+</head>
+<body>
+    <h1>年度定保工程進度表</h1>
+    <table id="projectTable">
+        <tr>
+            <th>組別</th>
+            <th>工程項目</th>
+            <th>狀態</th>
+            <th>備註</th>
+        </tr>
+    </table>
+    <script>
+        fetch('data.json')
+            .then(response => response.json())
+            .then(data => {
+                const table = document.getElementById('projectTable');
+                data.forEach(p => {
+                    table.innerHTML += `<tr>
+                        <td>${p.group}</td>
+                        <td>${p.item}</td>
+                        <td>${p.status === 'success' ? '✅' : (p.status === 'error' ? '❌' : '⚠️')}</td>
+                        <td>${p.note}</td>
+                    </tr>`;
+                });
+            });
+    </script>
+</body>
+</html>
