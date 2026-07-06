@@ -8,7 +8,6 @@
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 8px; border: 1px solid #ccc; text-align: center; font-size: 14px; }
         input { padding: 5px; width: 30%; }
-        button { cursor: pointer; padding: 5px; margin: 2px; }
     </style>
 </head>
 <body>
@@ -20,13 +19,11 @@
         <button onclick="addNewProject()">新增項目</button>
     </div>
 
-    <table id="projectTable" border="1">
-        <tr><th>組別</th><th>項目</th><th>狀態</th><th>操作</th></tr>
-    </table>
+    <table id="projectTable" border="1"></table>
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, push, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { getDatabase, ref, push, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDgGsFghCmwQ7trASUqsPzxPutEiswsXRI",
@@ -51,6 +48,20 @@
             document.getElementById('newItem').value = "";
         };
 
+        // 編輯模式：切換為輸入框
+        window.editItem = (id) => {
+            const row = document.getElementById(`row-${id}`);
+            const itemText = row.querySelector('.item-text').innerText;
+            row.querySelector('.item-cell').innerHTML = `<input type="text" id="edit-${id}" value="${itemText}">`;
+            row.querySelector('.action-cell').innerHTML = `<button onclick="saveEdit('${id}')">💾儲存</button>`;
+        };
+
+        // 儲存修改
+        window.saveEdit = (id) => {
+            const newItem = document.getElementById(`edit-${id}`).value;
+            update(ref(db, 'projects/' + id), { item: newItem });
+        };
+
         // 更新狀態
         window.updateStatus = (id, newStatus) => {
             update(ref(db, 'projects/' + id), { status: newStatus });
@@ -58,28 +69,25 @@
 
         // 刪除項目
         window.deleteProject = (id) => {
-            if (confirm("確定要刪除這項工程嗎？")) {
-                remove(ref(db, 'projects/' + id));
-            }
+            if (confirm("確定要刪除嗎？")) remove(ref(db, 'projects/' + id));
         };
 
-        // 即時渲染表格
+        // 即時渲染
         onValue(ref(db, 'projects'), (snapshot) => {
             const data = snapshot.val();
             const table = document.getElementById('projectTable');
             table.innerHTML = `<tr><th>組別</th><th>項目</th><th>狀態</th><th>操作</th></tr>`;
-            
             if (data) {
                 Object.keys(data).forEach(id => {
                     const p = data[id];
-                    table.innerHTML += `<tr>
+                    table.innerHTML += `<tr id="row-${id}">
                         <td>${p.group}</td>
-                        <td>${p.item}</td>
+                        <td class="item-cell"><span class="item-text">${p.item}</span></td>
                         <td>${p.status === 'success' ? '✅' : '❌'}</td>
-                        <td>
+                        <td class="action-cell">
+                            <button onclick="editItem('${id}')">✏️編輯</button>
                             <button onclick="updateStatus('${id}', 'success')">完成</button>
-                            <button onclick="updateStatus('${id}', 'error')">待料</button>
-                            <button onclick="deleteProject('${id}')" style="color:red;">刪除</button>
+                            <button onclick="deleteProject('${id}')" style="color:red;">🗑️</button>
                         </td>
                     </tr>`;
                 });
