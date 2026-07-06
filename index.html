@@ -6,8 +6,9 @@
     <style>
         body { font-family: sans-serif; padding: 10px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
-        th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
+        th, td { padding: 8px; border: 1px solid #ccc; text-align: center; font-size: 14px; }
         input { padding: 5px; width: 30%; }
+        button { cursor: pointer; padding: 5px; margin: 2px; }
     </style>
 </head>
 <body>
@@ -25,7 +26,7 @@
 
     <script type="module">
         import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, push, set, onValue, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { getDatabase, ref, push, set, onValue, update, remove } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
         const firebaseConfig = {
             apiKey: "AIzaSyDgGsFghCmwQ7trASUqsPzxPutEiswsXRI",
@@ -40,24 +41,26 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // 新增項目函數
+        // 新增項目
         window.addNewProject = () => {
             const group = document.getElementById('newGroup').value;
             const item = document.getElementById('newItem').value;
             if (!group || !item) { alert("請輸入完整資訊！"); return; }
-            
-            push(ref(db, 'projects'), { group, item, status: 'error' })
-            .then(() => { 
-                alert("新增成功！"); 
-                document.getElementById('newGroup').value = ""; 
-                document.getElementById('newItem').value = ""; 
-            })
-            .catch(err => alert("寫入失敗: " + err));
+            push(ref(db, 'projects'), { group, item, status: 'error' });
+            document.getElementById('newGroup').value = "";
+            document.getElementById('newItem').value = "";
         };
 
-        // 更新狀態函數
+        // 更新狀態
         window.updateStatus = (id, newStatus) => {
             update(ref(db, 'projects/' + id), { status: newStatus });
+        };
+
+        // 刪除項目
+        window.deleteProject = (id) => {
+            if (confirm("確定要刪除這項工程嗎？")) {
+                remove(ref(db, 'projects/' + id));
+            }
         };
 
         // 即時渲染表格
@@ -76,6 +79,7 @@
                         <td>
                             <button onclick="updateStatus('${id}', 'success')">完成</button>
                             <button onclick="updateStatus('${id}', 'error')">待料</button>
+                            <button onclick="deleteProject('${id}')" style="color:red;">刪除</button>
                         </td>
                     </tr>`;
                 });
