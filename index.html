@@ -1,54 +1,34 @@
-<!DOCTYPE html>
-<html lang="zh-Hant">
-<head>
-    <meta charset="UTF-8">
-    <title>年度定保工程管理系統</title>
-    <link rel="stylesheet" href="style.css">
-    <script type="module">
-        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-        import { getDatabase, ref, onValue, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
-
-        const firebaseConfig = {
-            apiKey: "AIzaSyDgGsFghCmwQ7trASUqsPzxPutEiswsXRI",
-            authDomain: "fagg68-f1569.firebaseapp.com",
-            databaseURL: "https://fagg68-f1569-default-rtdb.firebaseio.com",
-            projectId: "fagg68-f1569",
-            storageBucket: "fagg68-f1569.firebasestorage.app",
-            messagingSenderId: "207849613044",
-            appId: "1:207849613044:web:d0cf853b66b85fb4a660a1"
-        };
-
-        const app = initializeApp(firebaseConfig);
-        const db = getDatabase(app);
-
-        // 讀取並顯示資料
-        onValue(ref(db, 'projects'), (snapshot) => {
-            const data = snapshot.val();
-            const table = document.getElementById('projectTable');
-            table.innerHTML = `<tr><th>組別</th><th>項目</th><th>狀態</th><th>操作</th></tr>`;
-            
-            Object.keys(data).forEach(id => {
-                const p = data[id];
-                table.innerHTML += `<tr>
-                    <td>${p.group}</td>
-                    <td>${p.item}</td>
-                    <td>${p.status === 'success' ? '✅' : '❌'}</td>
-                    <td>
-                        <button onclick="updateStatus('${id}', 'success')">完成</button>
-                        <button onclick="updateStatus('${id}', 'error')">待料</button>
-                    </td>
-                </tr>`;
-            });
-        });
-
-        // 修改狀態函數 (設定給全域使用)
-        window.updateStatus = (id, newStatus) => {
-            update(ref(db, 'projects/' + id), { status: newStatus });
-        };
-    </script>
-</head>
 <body>
     <h1>年度定保工程進度表</h1>
-    <table id="projectTable"></table>
+    
+    <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ccc;">
+        <input type="text" id="newGroup" placeholder="組別">
+        <input type="text" id="newItem" placeholder="工程項目">
+        <button onclick="addNewProject()">新增項目</button>
+    </div>
+
+    <table id="projectTable" border="1"></table>
+
+    <script type="module">
+        // ... (保持原本的 import 和初始化代碼)
+        import { getDatabase, ref, push, set } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+
+        // 新增項目的函數
+        window.addNewProject = () => {
+            const group = document.getElementById('newGroup').value;
+            const item = document.getElementById('newItem').value;
+            if(group && item) {
+                // 產生一個新的節點並寫入
+                const newRef = push(ref(db, 'projects'));
+                set(newRef, {
+                    group: group,
+                    item: item,
+                    status: 'error' // 預設狀態
+                });
+                alert("新增成功！");
+            }
+        };
+        
+        // ... (保持原本的 onValue 渲染邏輯)
+    </script>
 </body>
-</html>
