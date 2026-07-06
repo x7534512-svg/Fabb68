@@ -7,7 +7,7 @@
         body { font-family: sans-serif; padding: 10px; }
         table { width: 100%; border-collapse: collapse; margin-top: 10px; }
         th, td { padding: 8px; border: 1px solid #ccc; text-align: center; font-size: 14px; }
-        input { padding: 5px; width: 30%; }
+        input { padding: 4px; width: 90%; }
         button { cursor: pointer; padding: 4px; margin: 2px; }
     </style>
 </head>
@@ -15,8 +15,8 @@
     <h1>年度定保工程進度表</h1>
     
     <div style="margin-bottom: 20px; padding: 10px; border: 1px solid #ccc;">
-        <input type="text" id="newGroup" placeholder="組別">
-        <input type="text" id="newItem" placeholder="工程項目">
+        <input type="text" id="newGroup" placeholder="組別" style="width: 20%;">
+        <input type="text" id="newItem" placeholder="工程項目" style="width: 40%;">
         <button onclick="addNewProject()">新增項目</button>
     </div>
 
@@ -39,55 +39,53 @@
         const app = initializeApp(firebaseConfig);
         const db = getDatabase(app);
 
-        // 新增項目
         window.addNewProject = () => {
             const group = document.getElementById('newGroup').value;
             const item = document.getElementById('newItem').value;
-            if (!group || !item) { alert("請輸入完整資訊！"); return; }
-            push(ref(db, 'projects'), { group, item, status: 'error' });
+            if (!group || !item) { alert("請輸入組別與項目！"); return; }
+            push(ref(db, 'projects'), { group, item, status: 'error', comment: '' });
             document.getElementById('newGroup').value = "";
             document.getElementById('newItem').value = "";
         };
 
-        // 編輯模式
         window.editItem = (id) => {
             const row = document.getElementById(`row-${id}`);
             const itemText = row.querySelector('.item-text').innerText;
-            row.querySelector('.item-cell').innerHTML = `<input type="text" id="edit-${id}" value="${itemText}">`;
+            const commentText = row.querySelector('.comment-text').innerText;
+            row.querySelector('.item-cell').innerHTML = `<input type="text" id="edit-item-${id}" value="${itemText}">`;
+            row.querySelector('.comment-cell').innerHTML = `<input type="text" id="edit-comment-${id}" value="${commentText}">`;
             row.querySelector('.action-cell').innerHTML = `<button onclick="saveEdit('${id}')">💾儲存</button>`;
         };
 
-        // 儲存修改
         window.saveEdit = (id) => {
-            const newItem = document.getElementById(`edit-${id}`).value;
-            update(ref(db, 'projects/' + id), { item: newItem });
+            const newItem = document.getElementById(`edit-item-${id}`).value;
+            const newComment = document.getElementById(`edit-comment-${id}`).value;
+            update(ref(db, 'projects/' + id), { item: newItem, comment: newComment });
         };
 
-        // 更新狀態
         window.updateStatus = (id, newStatus) => {
             update(ref(db, 'projects/' + id), { status: newStatus });
         };
 
-        // 刪除項目
         window.deleteProject = (id) => {
             if (confirm("確定要刪除嗎？")) remove(ref(db, 'projects/' + id));
         };
 
-        // 即時渲染表格
         onValue(ref(db, 'projects'), (snapshot) => {
             const data = snapshot.val();
             const table = document.getElementById('projectTable');
-            table.innerHTML = `<tr><th>組別</th><th>項目</th><th>狀態</th><th>操作</th></tr>`;
+            table.innerHTML = `<tr><th>組別</th><th>項目</th><th>備註</th><th>狀態</th><th>操作</th></tr>`;
             
             if (data) {
                 Object.keys(data).forEach(id => {
                     const p = data[id];
-                    // 修正狀態圖示邏輯
+                    const comment = p.comment || "";
                     const statusIcon = (p.status === 'success') ? '✅' : '❌';
                     
                     table.innerHTML += `<tr id="row-${id}">
                         <td>${p.group}</td>
                         <td class="item-cell"><span class="item-text">${p.item}</span></td>
+                        <td class="comment-cell"><span class="comment-text">${comment}</span></td>
                         <td>${statusIcon}</td>
                         <td class="action-cell">
                             <button onclick="editItem('${id}')">✏️編輯</button>
