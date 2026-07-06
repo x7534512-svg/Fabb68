@@ -1,3 +1,15 @@
+<!DOCTYPE html>
+<html lang="zh-Hant">
+<head>
+    <meta charset="UTF-8">
+    <title>年度定保工程進度表</title>
+    <style>
+        body { font-family: sans-serif; padding: 10px; }
+        table { width: 100%; border-collapse: collapse; margin-top: 10px; }
+        th, td { padding: 10px; border: 1px solid #ccc; text-align: center; }
+        input { padding: 5px; width: 30%; }
+    </style>
+</head>
 <body>
     <h1>年度定保工程進度表</h1>
     
@@ -7,55 +19,68 @@
         <button onclick="addNewProject()">新增項目</button>
     </div>
 
-    <table id="projectTable" border="1"></table>
+    <table id="projectTable" border="1">
+        <tr><th>組別</th><th>項目</th><th>狀態</th><th>操作</th></tr>
+    </table>
 
     <script type="module">
-    // 1. 匯入必要的 Firebase 模組
-    import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
-    import { getDatabase, ref, push, set, onValue } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
+        import { initializeApp } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-app.js";
+        import { getDatabase, ref, push, set, onValue, update } from "https://www.gstatic.com/firebasejs/9.22.0/firebase-database.js";
 
-    // 2. 初始化設定 (請務必填入你 Firebase 控制台 Web SDK 的設定值)
-    const firebaseConfig = {
-        apiKey: "你的API_KEY",
-        authDomain: "fagg68-f1569.firebaseapp.com",
-        databaseURL: "https://fagg68-f1569-default-rtdb.firebaseio.com",
-        projectId: "fagg68-f1569",
-        storageBucket: "fagg68-f1569.appspot.com",
-        messagingSenderId: "207849613044",
-        appId: "1:207849613044:web:d0cf853b66b85fb4a660a1"
-    };
+        const firebaseConfig = {
+            apiKey: "AIzaSyDgGsFghCmwQ7trASUqsPzxPutEiswsXRI",
+            authDomain: "fagg68-f1569.firebaseapp.com",
+            databaseURL: "https://fagg68-f1569-default-rtdb.firebaseio.com",
+            projectId: "fagg68-f1569",
+            storageBucket: "fagg68-f1569.appspot.com",
+            messagingSenderId: "207849613044",
+            appId: "1:207849613044:web:d0cf853b66b85fb4a660a1"
+        };
 
-    const app = initializeApp(firebaseConfig);
-    const db = getDatabase(app);
+        const app = initializeApp(firebaseConfig);
+        const db = getDatabase(app);
 
-    // 3. 定義新增項目的函數
-    window.addNewProject = () => {
-        const group = document.getElementById('newGroup').value;
-        const item = document.getElementById('newItem').value;
-        
-        if (!group || !item) {
-            alert("請輸入完整資訊！");
-            return;
-        }
+        // 新增項目函數
+        window.addNewProject = () => {
+            const group = document.getElementById('newGroup').value;
+            const item = document.getElementById('newItem').value;
+            if (!group || !item) { alert("請輸入完整資訊！"); return; }
+            
+            push(ref(db, 'projects'), { group, item, status: 'error' })
+            .then(() => { 
+                alert("新增成功！"); 
+                document.getElementById('newGroup').value = ""; 
+                document.getElementById('newItem').value = ""; 
+            })
+            .catch(err => alert("寫入失敗: " + err));
+        };
 
-        // 使用 push 產生唯一 ID 並寫入
-        const projectsRef = ref(db, 'projects');
-        const newProjectRef = push(projectsRef);
-        
-        set(newProjectRef, {
-            group: group,
-            item: item,
-            status: 'error'
-        })
-        .then(() => {
-            alert("新增成功！");
-            document.getElementById('newGroup').value = "";
-            document.getElementById('newItem').value = "";
-        })
-        .catch((error) => {
-            console.error("寫入失敗:", error);
-            alert("寫入失敗，請檢查 Firebase 規則。");
+        // 更新狀態函數
+        window.updateStatus = (id, newStatus) => {
+            update(ref(db, 'projects/' + id), { status: newStatus });
+        };
+
+        // 即時渲染表格
+        onValue(ref(db, 'projects'), (snapshot) => {
+            const data = snapshot.val();
+            const table = document.getElementById('projectTable');
+            table.innerHTML = `<tr><th>組別</th><th>項目</th><th>狀態</th><th>操作</th></tr>`;
+            
+            if (data) {
+                Object.keys(data).forEach(id => {
+                    const p = data[id];
+                    table.innerHTML += `<tr>
+                        <td>${p.group}</td>
+                        <td>${p.item}</td>
+                        <td>${p.status === 'success' ? '✅' : '❌'}</td>
+                        <td>
+                            <button onclick="updateStatus('${id}', 'success')">完成</button>
+                            <button onclick="updateStatus('${id}', 'error')">待料</button>
+                        </td>
+                    </tr>`;
+                });
+            }
         });
-    };
-</script>
+    </script>
 </body>
+</html>
